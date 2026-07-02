@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "ts-node src/server.ts",
-    "build": "tsc -p tsconfig.json"
+    "dev": "ts-node src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "seed": "ts-node src/scripts/seed.ts",
+    "start": "node dist/server.js"
   },
   "dependencies": {
     "@types/express": "^5.0.6",

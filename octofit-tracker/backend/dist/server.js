@@ -4,11 +4,67 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
+const mongoose_1 = __importDefault(require("mongoose"));
+const models_1 = require("./models");
 const app = (0, express_1.default)();
-const port = process.env.PORT || 8000;
+app.use(express_1.default.json());
+const port = Number(process.env.PORT) || 8000;
+const codespaceName = process.env.CODESPACE_NAME;
+const apiBaseUrl = codespaceName
+    ? `https://${codespaceName}-8000.app.github.dev`
+    : `http://localhost:${port}`;
+const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/octofit_db';
+async function connectToMongo() {
+    await mongoose_1.default.connect(mongoUri);
+}
+async function registerCollectionRoutes() {
+    const routes = [
+        { path: ['/api/users', '/api/users/'], model: models_1.User },
+        { path: ['/api/teams', '/api/teams/'], model: models_1.Team },
+        { path: ['/api/activities', '/api/activities/'], model: models_1.Activity },
+        { path: ['/api/leaderboard', '/api/leaderboard/'], model: models_1.LeaderboardEntry },
+        { path: ['/api/workouts', '/api/workouts/'], model: models_1.Workout },
+    ];
+    routes.forEach(({ path, model }) => {
+        app.get(path, async (_req, res) => {
+            try {
+                const items = await model.find({});
+                res.json(items);
+            }
+            catch (error) {
+                res.status(500).json({ error: 'Failed to fetch data', details: error });
+            }
+        });
+        app.post(path, async (req, res) => {
+            try {
+                const newItem = await model.create(req.body);
+                res.status(201).json(newItem);
+            }
+            catch (error) {
+                res.status(500).json({ error: 'Failed to create item', details: error });
+            }
+        });
+    });
+}
 app.get('/api/health', (_req, res) => {
-    res.json({ status: 'ok', message: 'Octofit Tracker backend is running' });
+    res.json({
+        status: 'ok',
+        message: 'Octofit Tracker backend is running',
+        apiBaseUrl,
+    });
 });
-app.listen(port, () => {
-    console.log(`Server listening on port ${port}`);
+app.get('/api/config', (_req, res) => {
+    res.json({ apiBaseUrl, port, mongoUri });
+});
+async function startServer() {
+    await connectToMongo();
+    await registerCollectionRoutes();
+    app.listen(port, () => {
+        console.log(`Octofit Tracker API listening on port ${port}`);
+        console.log(`API base URL: ${apiBaseUrl}`);
+    });
+}
+startServer().catch((error) => {
+    console.error('Failed to start server', error);
+    process.exit(1);
 });
