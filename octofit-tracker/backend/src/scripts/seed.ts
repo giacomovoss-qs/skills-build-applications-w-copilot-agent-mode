@@ -1,12 +1,12 @@
 import mongoose from 'mongoose';
 import { Activity, LeaderboardEntry, Team, User, Workout } from '../models';
+import { connectToMongo } from '../database';
 
 // Seed the octofit_db database with test data.
 async function seedDatabase() {
   console.log('Seed the octofit_db database with test data');
 
-  const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/octofit_db';
-  await mongoose.connect(mongoUri);
+  await connectToMongo();
 
   await Promise.all([
     User.deleteMany({}),

@@ -1,6 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import { Activity, LeaderboardEntry, Team, User, Workout } from './models';
+import { connectToMongo, mongoUri } from './database';
 
 const app = express();
 app.use(express.json());
@@ -11,11 +12,7 @@ const apiBaseUrl = codespaceName
   ? `https://${codespaceName}-8000.app.github.dev`
   : `http://localhost:${port}`;
 
-const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/octofit_db';
-
-async function connectToMongo() {
-  await mongoose.connect(mongoUri);
-}
+// `mongoUri` and `connectToMongo` are provided by `src/database.ts`
 
 async function registerCollectionRoutes() {
   const routes = [
